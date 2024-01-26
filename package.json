@@ -1,0 +1,12 @@
+{
+  "name": "express101",
+  "version": "1.0.0",
+  "description": "Esse é um repositório que eu estou fazendo para \"ensinar\" (e consequentemente fixar os conhecimentos) de como criar um app com express",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
