@@ -1,22 +1,49 @@
-# 1ª Etapa
+# 2ª Etapa
 
-## 1º Criar o repositório (seja pelo github ou git init)
+Vamos criar algumas rotas.
 
-## 2º Passo - Iniciar o projeto
+## 1º Passo - Adicionar middleware json e forms
 ````
-npm init -y
+app.use(express.json())
+app.use(express.urlencoded({ extended: true}))
 ````
-Esse comando cria uma package.json com as especificações do projeto.  
-A flag -y é "Yes to all"
+Esses middlewares permitem lidar com as requisições recebidas através de forms e json.
 
-## 3º Passo - Instalar o nodemon
-````
-npm install --save-dev nodemo
-````
-A flag --save-dev instala o pacote como dev-dependency
+## 2º Passo - Adicionar um pseudo banco de dados
 
-## 4º Passo - app.js
-Criar um arquivo js e iniciar com o boilerplate do express:
+Vamos receber os dados em uma variável enquanto não adicionamos um banco de dados
+````
+const db = {
+    'users': [
+        { 'nome': 'Marcelo', 'id': 1 },
+        { 'nome': 'Tainá', 'id': 2 },
+        { 'nome': 'Eduardo', 'id': 3 },
+    ]
+}
+````
+
+## 3º Passo - Rotas dinâmicas
+
+Podemos usar parametros para receber argumentos do front end
+Se criarmos uma rota ``users/:id`` e o usuário navegar até http://localhost:3000/users/2 , podemos usar o 2 para retornar o usuário com id = 2. Para isso, basta usar ``req.params`` e o nome do parâmetro.
+
+````
+app.get('/users/', (req, res) => {
+    res.send(db.users)
+})
+
+app.get('/users/:id', (req, res) => {
+    let user = db.users.find( user => user.id == req.params.id)
+    res.send(user)
+})
+````
+
+## 4º Passo - Put e Delete
+
+Para usar os demais métodos, vamos precisar do postman ou insomnia.
+Vou adicionar as collections.
+
+Vamos alterar um registro usando o put:
 ````
 //app.js
 
