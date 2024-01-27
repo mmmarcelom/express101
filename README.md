@@ -7,11 +7,17 @@ Esse é um repositório que eu estou fazendo para "ensinar" (e consequentemente 
 Cada branch é uma etapa.
 
 ### Etapa 1 
-Apenas o boilerplate da aplicação.
+
+Inclui:
+- Boilerplate da aplicação  
+  - Inicializar o projeto
+  - Instalar o nodemon
+- GET
+- LISTEN
 
 ### Etapa 2
 Inclui: 
-Adicionar uso de rotas dinâmicas
+- Rotas dinâmicas
 - DELETE
 - PUT
 - POST
