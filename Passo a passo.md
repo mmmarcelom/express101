@@ -1,11 +1,43 @@
-# 2ª Etapa
+# 3ª Etapa
 
-Vamos criar algumas rotas.
+Vamos adicionar o router.
 
-## 1º Passo - Adicionar um pseudo banco de dados
+## 1º Passo - Rotas
 
-Vamos receber os dados em uma variável enquanto não adicionamos um banco de dados
+### Criar arquivo routes.js
+
+Vamos criar um arquivo de rotas para os usuários.
+No arquivo de rotas, vamos adicionar o router:
+
 ````
+// routes.js
+
+const express = require("express");
+const router = express.Router();
+const db = require('../contants')
+
+router.get('/', (req, res) => {
+    res.send(db.users)
+})
+
+module.exports = router;
+
+````
+E no arquivo app.js, vamos adicionar 
+
+````
+const usersRoute = require("./routes.js")
+app.use('/users', usersRoute)
+
+````
+
+Agora que estamos usando vários arquivos, o pseudo banco não estará disponível nas outras rotas.
+Vamos criar um arquivo de constantes e mover nossa constante para lá.
+(Na próxima etapa vamos usar um json ao invés de uma constante)
+
+````
+// constants.js
+
 const db = {
     'users': [
         { 'nome': 'Marcelo', 'id': 1 },
@@ -13,92 +45,138 @@ const db = {
         { 'nome': 'Eduardo', 'id': 3 },
     ]
 }
-````
 
-## 2º Passo - Rotas dinâmicas
+const private_key = 'abc123' // <= Já explico o que é isso
 
-Podemos usar parametros para receber argumentos do front end
-Se criarmos uma rota ``users/:id`` e o usuário navegar até http://localhost:3000/users/2 , podemos usar o 2 para retornar o usuário com id = 2. Para isso, basta usar ``req.params`` e o nome do parâmetro.
+module.exports = { db, private_key }
 
 ````
-app.get('/users/', (req, res) => {
-    res.send(db.users)
-})
 
-app.get('/users/:id', (req, res) => {
-    let user = db.users.find( user => user.id == req.params.id)
-    res.send(user)
-})
+Dessa forma, qualquer chamado para localhost:3000/users, vai utilizar as rotas.
+
+### Mover suas rotas para o arquivo de rotas
+
+Podemos mover todas as rotas de usuários para a rota do users.
+Também podemos adicionar vários arquivos de rotas, cada um com um serviço diferente.
+Ex.: users, products, lawsuits e etc..
+
+Para organizar isso tudo, é interessante colocar todas as rotas em uma única pasta chamada routes.
+Não se esqueça de atualizar as referencias.
+
+## 2º Passo - Segurança
+
+### Login e senha
+
+Para garantir a segurança, precisamos implantar o básico de segurança.
+
+Para a rota de login, enviaremos um usuário e senha e receberemos um access_token.
+Para as demais rotas, enviaremos o access_token.
+
+Vamos deixar a rota lawfirms sem qualquer segurança, visto que a ideia é ela ser pública.
+
+Para facilitar a organização, vamos criar uma pasta para os middlewares.
+
+Note que eu adicionei username e senha na constant de usuários.
+
+````
+// middlewares/login.js
+
+const { db, private_key } = require('../contants')
+
+const checkCredentials = (req, res, next) => {
+
+    const userLogin = req.headers.login
+    const userPassword = req.headers.password
+    
+    const user = db.users.find(user => user.login === userLogin)
+    console.log(db.users)
+    
+    if(!user) return res.status(401).send('Usuário não existe')
+    if(!checkPassword(user, userPassword)) return res.status(401).send('Senha incorreta') 
+
+    req.user = user
+        
+    next()
+}
+
+function checkPassword(user, userPassword){
+    return user.password === userPassword
+}
 ````
 
-## 3º Passo - Remover um usuário com DELETE
+Vamos adicionar a rota
 
-Para usar os demais métodos, vamos precisar do postman ou insomnia.
-Vou adicionar as collections.
+````
+const { authenticate } = require('./middlewares/auth.js')
 
-Vamos remover um registro usando o delete:
+const authRoute = require("./routes/auth.js")
+app.use('/auth', authRoute)
+
+````
+
+Na nossa rota, vamos adicionar a função:
+````
+// auth.js
+
+const express = require("express");
+const router = express.Router();
+const { checkCredentials, getToken, eraseToken } = require('../middlewares/login.js')
+
+router.get('/login', checkCredentials, getToken)
+
+router.get('/logout', eraseToken)
+
+module.exports = router;
+
+````
+
+### JWT
+
+O access_token é uma chave que passamos para o usuário que fez login com sucesso.  
+Com essa chave ele acessa todas as outras rotas.  
+Instale o jwt no terminal: ``npm install jsonwebtoken``
+
+Criaremos um arquivo na pasta middlewares:
+````
+// middlewares/auth.js
+
+const jwt = require('jsonwebtoken')
+const { private_key } = require('../contants')
+
+const authenticate = (req, res, next) => {
+    const accessToken = req.cookies.access_token;
+    if(!accessToken) res.sendStatus(403);
+   
+    try {
+      jwt.verify(accessToken, private_key);
+      next();
+    } catch (error) {
+      res.sendStatus(403);
+    }
+  }
+
+module.exports = { authenticate }
+
+````
+
+Como vamos adicionar o access_token nos cookies, também precisamos usar ``npm install cookie-parser``
+
+Adicionamos o cookieParser e nosso authenticate como middlewares
+
 ````
 //app.js
 
-app.delete('/users/:id', (req, res) => {
-    const index = db.users.findIndex(user => user.id === parseInt(req.params.id))
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
-    if(index == -1){
-        res.send('Não existe usuário com esse ID')
-    } else {
-        db.users.splice(index, 1)
-        res.send(db.users)
-    }
-})
-````
 
-## 4º Passo - Adicionar middleware json e forms
-
-Para usar o post e put, vamos precisar pegar as informações do body da requisição. Para isso vamos precisar desses middlewares abaixo:
-````
-app.use(express.json())
-app.use(express.urlencoded({ extended: true}))
-````
-Esses middlewares permitem lidar com as requisições recebidas através de forms e json.
-
-## 5º Passo - Adicionar um usuário com o POST
-Nosso arquivo principal é o app.js, então o entry point tem que ser ele:
+const { authenticate } = require("./middlewares/auth.js")
+app.use(authenticate)
 
 ````
-app.post('/users', (req, res) => {
-    const newUserData = { ...req.body }
-    
-    if (!newUserData.nome) return res.status(400).send('Faltou o nome: nome')
 
-    const newUser = { "id": db.users.length + 1, "nome": newUserData.nome }
-
-    db.users.push(newUser)
-    res.status(201).json(newUser)
-})
-````
-Percebe que eu comecei a mandar status diferentes?  
-400 é uma bad request (faltou o nome)
-201 é criado
-
-Se você gosta de gatos, acesse: https://http.cat/
-Se voce prefere cachorros, acesse: https://http.dog/
-
-## 6º Passo - Alterar um usuário com PUT
-
-````
-app.put('/users/:id', (req, res) => {
-    
-    if(!req.body) return res.status(400).send('Favor enviar os dados')
-    const newUserdata = { ...req.body }
-
-    const id = parseInt(req.params.id)
-    const userIndex = db.users.findIndex(user => user.id === id)
-    
-    if(userIndex == -1) return res.status(404).send('Usuário não encontrado')
-
-    db.users[userIndex].push(newUserdata)
-    res.status(200).json(db.users)
-})
-````
-
-Por enquanto é só... não sei se vc percebeu, mas o arquivo já está ficando grande, próxima etapa vamos criar rotas
+Estamos usando um arquivo de constantes para armazenar nosso banco de dados e segredo dos nossos tokens.  
+Na próxima etapa vamos: 
+1. adicionar variáveis de ambiente
+2. conectar com um banco de verdade
+3. adicionar criptografia nas senhas
