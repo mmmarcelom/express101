@@ -8,7 +8,6 @@ Cada branch é uma etapa.
 
 ### Etapa 1 
 
-Inclui:
 - Boilerplate da aplicação  
   - Inicializar o projeto
   - Instalar o nodemon
@@ -16,20 +15,20 @@ Inclui:
 - LISTEN
 
 ### Etapa 2
-Inclui: 
+
 - Rotas dinâmicas
 - DELETE
 - PUT
 - POST
 
 ### Etapa 3
-Inclui:
+
 - Router
 - Usuário e senha
 - JWT
 
 ### Etapa 4
-Inclui:
+
 - Criptografia (hash e salt)
 - Conexão com Banco de Dados (MySQL)
 - Variáveis de Ambiente
