@@ -12,8 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.1",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "mysql": "^2.18.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.3"

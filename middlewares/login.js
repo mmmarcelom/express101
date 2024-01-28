@@ -1,6 +1,6 @@
-//login
+// middlewares/login
 
-const { db, private_key } = require('../contants')
+const UserModel = require('../models/UserModel')
 const jwt = require('jsonwebtoken')
 
 const checkCredentials = (req, res, next) => {
@@ -8,14 +8,18 @@ const checkCredentials = (req, res, next) => {
     const userLogin = req.headers.login
     const userPassword = req.headers.password
     
-    const user = db.users.find(user => user.login === userLogin)
-    
-    if(!user) return res.status(401).send('Usuário não existe')
-    if(!checkPassword(user, userPassword)) return res.status(401).send('Senha incorreta') 
-
-    req.user = user
+    UserModel.getUserByEmail(userLogin, (error, results) => {
         
-    next()
+        if (error) return null
+        const user = results
+        
+        if(!user) return res.status(401).send('Usuário não existe')
+        if(!checkPassword(user, userPassword)) return res.status(401).send('Senha incorreta') 
+    
+        req.user = user
+            
+        next()
+    })
 }
 
 function checkPassword(user, userPassword){
@@ -24,14 +28,15 @@ function checkPassword(user, userPassword){
 
 const getToken = (req, res) => {
     
-    const accessToken = jwt.sign({ id: req.user.id }, private_key, { expiresIn: '1h' })
+    const accessToken = jwt.sign({ id: req.user.id, fullname: req.user.fullname }, process.env.PRIVATE_KEY, { expiresIn: '1h' })
 
     res
     .cookie("access_token", accessToken, { httpOnly: true, secure: false })
+    .cookie("fullname", req.user.fullname, { httpOnly: true, secure: false })
     .status(200)
     .json({ message: "Logado com sucesso" });
 
-    console.log('Authenticated:', req.user)
+    console.log(`${req.user.fullname} logou no sistema.`)
 }
 
 const eraseToken = (req, res) => {

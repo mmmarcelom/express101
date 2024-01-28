@@ -2,6 +2,7 @@
 
 const express = require("express");
 const app = express()
+require('dotenv').config();
 
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
@@ -16,10 +17,15 @@ app.get('/', (req, res) => {
 })
 
 const authRoute = require("./routes/auth.js")
-app.use('/auth/', authRoute)
+app.use('/auth', authRoute)
+
+const registerRoute = require("./routes/register.js")
+app.use('/register', registerRoute)
 
 const { authenticate } = require("./middlewares/auth.js")
 app.use(authenticate)
+
+app.use(require('./middlewares/logs.js'))
 
 const usersRoute = require("./routes/users.js")
 app.use('/users', usersRoute)

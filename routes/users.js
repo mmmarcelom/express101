@@ -1,18 +1,47 @@
 // users.js
 
-const express = require("express");
-const router = express.Router();
-const { db } = require('../contants')
+const router = require("express").Router()
+const UserModel = require('../models/UserModel')
 
 router.get('/', (req, res) => {
-    res.status(200).send(db.users)
+    UserModel.getAllUsers((error, results) => {
+        if (error) return res.status(500).json({ error: 'MySQL connection error' })
+        else return res.status(200).json({ results })
+    })
 })
 
 router.get('/:id', (req, res) => {
-    let user = db.users.find( user => user.id == req.params.id)
-    res.send(user)
+    UserModel.getUserById(req.params.id, (error, results) => {
+        if (error) return res.status(500).json({ error: 'MySQL connection error' })
+        else {
+            if(results.length === 0) return res.status(200).json({ message: "Nenhum usuário com esse ID" })
+            return res.status(200).json({ results })
+        }
+    })
 })
 
+router.delete('/:id', (req, res) => {
+    UserModel.removeUserById(req.params.id, (error, results) => {
+        if (error) return res.status(500).json({ error: 'MySQL connection error' })
+        return res.status(200).json({ results })
+    })
+})
+
+router.post('/', (req, res) => {
+    const newUserData = { ...req.body }
+    
+    if (!newUserData.fullname) return res.status(400).send('Faltou nome de usuário')
+    if (!newUserData.email) return res.status(400).send('Faltou email')
+    if (!newUserData.password) return res.status(400).send('Faltou senha')
+
+    UserModel.createUser(newUserData, (error, results) => {
+      if (error) return res.status(500).json({ error: 'MySQL connection error' })
+      else return res.status(201).json({ results })
+    })
+})
+
+
+/*
 router.delete('/:id', (req, res) => {
     const index = db.users.findIndex(user => user.id === parseInt(req.params.id))
 
@@ -22,17 +51,6 @@ router.delete('/:id', (req, res) => {
         db.users.splice(index, 1)
         res.send(db.users)
     }
-})
-
-router.post('/', (req, res) => {
-    const newUserData = { ...req.body }
-    
-    if (!newUserData.nome) return res.status(400).send('Faltou o nome: nome')
-
-    const newUser = { "id": db.users.length + 1, "nome": newUserData.nome }
-
-    db.users.push(newUser)
-    res.status(201).json(newUser)
 })
 
 router.put('/:id', (req, res) => {
@@ -48,5 +66,7 @@ router.put('/:id', (req, res) => {
     db.users[userIndex]= newUserdata
     res.status(200).json(db.users)
 })
+
+*/
 
 module.exports = router;
